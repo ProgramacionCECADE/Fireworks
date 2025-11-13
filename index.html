@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Espectáculo de Fuegos Artificiales Navideños</title>
+    <link rel="stylesheet" href="fireworks.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="decorations">
+        <div class="decoration-container" style="top: 10%; left: 5%; transform: rotate(-10deg);">
+            <div class="decoration-box">
+                <img src="https://www.freeiconspng.com/uploads/christmas-ornament-png-clipart-31.png" alt="Christmas Ornament" class="decoration-img">
+                <div class="decoration-glow"></div>
+            </div>
+        </div>
+        <div class="decoration-container" style="top: 20%; right: 10%; transform: rotate(15deg);">
+            <div class="decoration-box">
+                <img src="https://waryhub.com/files/preview/960x960/11746628468igthipo7yho2kphhva3x1zksgcivjjawjpxyu1qnhwxvupyno1pwpfiuavjd9h6mpj6urwzllyiex7yz0n1hcei8sktvku8n0acw.png" alt="Christmas Tree" class="decoration-img">
+                <div class="decoration-glow"></div>
+            </div>
+        </div>
+        <div class="decoration-container" style="bottom: 20%; left: 15%; transform: rotate(5deg);">
+            <div class="decoration-box">
+                <img src="https://gallery.yopriceville.com/downloadfullsize/send/23437" alt="Gift Box" class="decoration-img">
+                <div class="decoration-glow"></div>
+            </div>
+        </div>
+        <div class="decoration-container" style="top: 60%; right: 20%; transform: rotate(-15deg);">
+            <div class="decoration-box">
+                <img src="https://images.vexels.com/media/users/3/305188/isolated/preview/4f594819bbfc0b52465a828ddd3ba676-color-stroke-christmas-candy-cane.png" alt="Candy Cane" class="decoration-img">
+                <div class="decoration-glow"></div>
+            </div>
+        </div>
+        <div class="decoration-container" style="bottom: 10%; right: 10%; transform: rotate(10deg);">
+            <div class="decoration-box">
+                <img src="https://cdn.creazilla.com/cliparts/29652/erics-santa-claus-hat-clipart-xl.png" alt="Santa Hat" class="decoration-img">
+                <div class="decoration-glow"></div>
+            </div>
+        </div>
+    </div>
+    
+    <canvas id="fireworksCanvas"></canvas>
+    <div class="info-text" id="infoText">¡Click o presiona para iniciar el show navideño!</div>
+
+    <!-- Audio para música de fondo navideña -->
+    <audio id="backgroundMusic" loop>
+        <source src="media/audio/background_music.mp3" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+
+    <!-- Tone.js library for audio generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <script src="fireworks.js"></script>
+</body>
+</html>
