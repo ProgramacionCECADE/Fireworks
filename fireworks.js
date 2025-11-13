@@ -31,6 +31,11 @@ let currentLineIndex = 0;
 // MODIFICACIÓN: Variable para controlar la posición vertical del texto (0 = arriba, 0.5 = centro, 1 = abajo)
 let textPositionY = 0.5;
 
+// Variables para responsive
+let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+let fontSizeMultiplier = isMobile ? 0.6 : 1;
+let pointsGapMultiplier = isMobile ? 1.5 : 1;
+
 // Audio
 let launchSynth, explosionSynth, reverb;
 
@@ -221,16 +226,19 @@ function createParticles(x, y, count = 30, isTextParticle = false) {
 function getTextPoints(textArray, fontSize = 80) {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    ctx.font = `bold ${fontSize}px Arial`;
     
-    const lineHeight = fontSize * 1.2;
+    // Ajustar tamaño de fuente según el dispositivo
+    const responsiveFontSize = fontSize * fontSizeMultiplier;
+    ctx.font = `bold ${responsiveFontSize}px Arial`;
+    
+    const lineHeight = responsiveFontSize * 1.2;
     let totalHeight = textArray.length * lineHeight;
     
     // MODIFICACIÓN: Usar textPositionY para controlar la posición vertical
-    const startY = (ch - totalHeight) * textPositionY + fontSize * 0.8;
+    const startY = (ch - totalHeight) * textPositionY + responsiveFontSize * 0.8;
     
     const points = [];
-    const gap = 6;
+    const gap = 6 * pointsGapMultiplier; // Ajustar gap según el dispositivo
 
     textArray.forEach((line, lineIndex) => {
         const textWidth = ctx.measureText(line).width;
@@ -239,11 +247,11 @@ function getTextPoints(textArray, fontSize = 80) {
         
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = textWidth + 20;
-        tempCanvas.height = fontSize + 20;
+        tempCanvas.height = responsiveFontSize + 20;
         const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.font = `bold ${fontSize}px Arial`;
+        tempCtx.font = `bold ${responsiveFontSize}px Arial`;
         tempCtx.fillStyle = 'white';
-        tempCtx.fillText(line, 10, fontSize + 10);
+        tempCtx.fillText(line, 10, responsiveFontSize + 10);
         
         const lineImageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
     
@@ -254,7 +262,7 @@ function getTextPoints(textArray, fontSize = 80) {
                 if (alpha > 128) {
                     points.push({
                         x: x + px - 10,
-                        y: (y - fontSize * 0.8) + py - 10
+                        y: (y - responsiveFontSize * 0.8) + py - 10
                     });
                 }
             }
@@ -270,7 +278,7 @@ function launchTextFireworks() {
     }
     
     // MODIFICACIÓN EXTREMA: Reducir al mínimo los puntos por frame
-    const pointsPerFrame = 8; // Solo 1 punto por frame (era 3, luego 12 original)
+    const pointsPerFrame = isMobile ? 4 : 8; // Ajustar según dispositivo
     for (let i = 0; i < pointsPerFrame && currentTextIndex < textPoints.length; i++) {
         const point = textPoints[currentTextIndex];
         const startX = random(cw * 0.1, cw * 0.9);
@@ -365,16 +373,29 @@ function startAudio() {
     });
 }
 
-// Event listeners
-document.body.addEventListener('mousedown', startAudio);
-document.body.addEventListener('touchstart', startAudio);
-
-window.addEventListener('resize', () => {
+// Función para manejar el redimensionado de la ventana
+function handleResize() {
     cw = window.innerWidth;
     ch = window.innerHeight;
     canvas.width = cw;
     canvas.height = ch;
-});
+    
+    // Actualizar detección de móvil
+    isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || cw < 768;
+    fontSizeMultiplier = isMobile ? 0.6 : 1;
+    pointsGapMultiplier = isMobile ? 1.5 : 1;
+    
+    // Reiniciar puntos de texto si estamos en modo texto
+    if (textFireworkMode) {
+        textPoints = getTextPoints(textMessage);
+    }
+}
+
+// Event listeners
+document.body.addEventListener('mousedown', startAudio);
+document.body.addEventListener('touchstart', startAudio);
+
+window.addEventListener('resize', handleResize);
 
 canvas.addEventListener('mousedown', (e) => {
     e.preventDefault();
@@ -394,6 +415,16 @@ canvas.addEventListener('touchstart', (e) => {
 
 canvas.addEventListener('mouseup', () => { isMouseDown = false; });
 canvas.addEventListener('touchend', () => { isMouseDown = false; });
+
+// Prevenir scroll en dispositivos táctiles
+document.addEventListener('touchmove', function(e) {
+    if (e.target === canvas) {
+        e.preventDefault();
+    }
+}, { passive: false });
+
+// Inicializar con el tamaño correcto
+handleResize();
 
 // Start the animation
 window.onload = loop;
