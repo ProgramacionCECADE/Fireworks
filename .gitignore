@@ -1,5 +1,6 @@
 .trae/
 .vscode/
+.trae/documents
 *.code-workspace
 .history/
 .idea/
