@@ -20,7 +20,7 @@ let audioStarted = false;
 let musicStarted = false;
 
 // Text fireworks
-let textMessage = ["FELIZ NAVIDAD", "ANGIE"];
+let textMessage = ["TEXTO DE", "EJEMPLO"];
 let textPoints = [];
 let textFireworkMode = false;
 let textFireworkTimer = 0;
@@ -74,6 +74,50 @@ function calculateDistance(p1x, p1y, p2x, p2y) {
     const xDistance = p1x - p2x;
     const yDistance = p1y - p2y;
     return Math.sqrt(Math.pow(xDistance, 2) + Math.pow(yDistance, 2));
+}
+
+function clamp(n, min, max) { return Math.min(max, Math.max(min, n)); }
+
+function computeResponsiveFontSize(textArray) {
+    const margin = Math.max(12, cw * 0.05);
+    let size = Math.min(ch * 0.12, cw * 0.2);
+    size = Math.max(24, size);
+    const tmpCanvas = document.createElement('canvas');
+    const tmpCtx = tmpCanvas.getContext('2d');
+    while (size > 24) {
+        tmpCtx.font = `bold ${size}px Arial`;
+        let maxWidth = 0;
+        for (let i = 0; i < textArray.length; i++) {
+            const w = tmpCtx.measureText(textArray[i]).width;
+            if (w > maxWidth) maxWidth = w;
+        }
+        if (maxWidth <= cw - margin * 2) break;
+        size -= 2;
+    }
+    return size;
+}
+
+function wrapTextToWidth(textArray, maxWidth, fontSize) {
+    const tmpCanvas = document.createElement('canvas');
+    const tmpCtx = tmpCanvas.getContext('2d');
+    tmpCtx.font = `bold ${fontSize}px Arial`;
+    const wrapped = [];
+    for (let i = 0; i < textArray.length; i++) {
+        const words = String(textArray[i]).split(/\s+/);
+        let line = '';
+        for (let j = 0; j < words.length; j++) {
+            const testLine = line ? line + ' ' + words[j] : words[j];
+            const testWidth = tmpCtx.measureText(testLine).width;
+            if (testWidth <= maxWidth) {
+                line = testLine;
+            } else {
+                if (line) wrapped.push(line);
+                line = words[j];
+            }
+        }
+        if (line) wrapped.push(line);
+    }
+    return wrapped;
 }
 
 // Particle class
@@ -224,51 +268,44 @@ function createParticles(x, y, count = 30, isTextParticle = false) {
 
 // Get text points using canvas measureText
 function getTextPoints(textArray, fontSize = 80) {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    // Ajustar tamaño de fuente según el dispositivo
-    const responsiveFontSize = fontSize * fontSizeMultiplier;
-    ctx.font = `bold ${responsiveFontSize}px Arial`;
-    
-    const lineHeight = responsiveFontSize * 1.2;
-    let totalHeight = textArray.length * lineHeight;
-    
-    // MODIFICACIÓN: Usar textPositionY para controlar la posición vertical
-    const startY = (ch - totalHeight) * textPositionY + responsiveFontSize * 0.8;
-    
+    const margin = Math.max(12, cw * 0.05);
+    const computedFontSize = computeResponsiveFontSize(textArray);
+    const fontPx = computedFontSize;
+    const tmpCanvas = document.createElement('canvas');
+    const tmpCtx = tmpCanvas.getContext('2d');
+    tmpCtx.font = `bold ${fontPx}px Arial`;
+    const wrappedLines = wrapTextToWidth(textArray, cw - margin * 2, fontPx);
+    const lineHeight = fontPx * 1.2;
+    const aspect = ch / cw;
+    const positionY = aspect > 1.6 ? 0.35 : textPositionY;
+    const totalHeight = wrappedLines.length * lineHeight;
+    const startY = (ch - totalHeight) * positionY + fontPx * 0.8;
     const points = [];
-    const gap = 6 * pointsGapMultiplier; // Ajustar gap según el dispositivo
+    const gapBase = Math.round(fontPx / 14);
+    const gap = Math.max(4, Math.min(10, gapBase)) * pointsGapMultiplier;
 
-    textArray.forEach((line, lineIndex) => {
-        const textWidth = ctx.measureText(line).width;
-        const x = (cw - textWidth) / 2;
+    wrappedLines.forEach((line, lineIndex) => {
+        const textWidth = tmpCtx.measureText(line).width;
+        const x = margin + (cw - margin * 2 - textWidth) / 2;
         const y = startY + (lineIndex * lineHeight);
-        
         const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = textWidth + 20;
-        tempCanvas.height = responsiveFontSize + 20;
+        tempCanvas.width = Math.ceil(textWidth) + 20;
+        tempCanvas.height = Math.ceil(fontPx) + 20;
         const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.font = `bold ${responsiveFontSize}px Arial`;
+        tempCtx.font = `bold ${fontPx}px Arial`;
         tempCtx.fillStyle = 'white';
-        tempCtx.fillText(line, 10, responsiveFontSize + 10);
-        
+        tempCtx.fillText(line, 10, fontPx + 10);
         const lineImageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
-    
         for (let py = 0; py < tempCanvas.height; py += gap) {
             for (let px = 0; px < tempCanvas.width; px += gap) {
                 const index = (py * tempCanvas.width + px) * 4;
                 const alpha = lineImageData.data[index + 3];
                 if (alpha > 128) {
-                    points.push({
-                        x: x + px - 10,
-                        y: (y - responsiveFontSize * 0.8) + py - 10
-                    });
+                    points.push({ x: x + px - 10, y: (y - fontPx * 0.8) + py - 10 });
                 }
             }
         }
     });
-    
     return points;
 }
 
@@ -388,6 +425,10 @@ function handleResize() {
     // Reiniciar puntos de texto si estamos en modo texto
     if (textFireworkMode) {
         textPoints = getTextPoints(textMessage);
+    } else {
+        if (textPoints.length) {
+            textPoints = [];
+        }
     }
 }
 
